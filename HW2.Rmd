@@ -1,10 +1,13 @@
 ---
 title: 'Homework 2: Data 605'
 author: "Umer Farooq"
-date: "2024-10-26"
+date: "2024-11-10"
 output:
-  html_document:
-    df_print: paged
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+editor_options:
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +17,7 @@ library(tidyverse)
 
 ## Problem 1:
 
-### Bayesian:
+### **Bayesian:**
 
 **Problem Statement:**
 
@@ -22,128 +25,58 @@ A new credit scoring system has been developed to predict the likelihood of loan
 
 **Solution:**
 
-A credit scoring system has been developed with the following metrics:
-- \textbf{Sensitivity} (\(P(\text{Positive Test} \mid \text{Default})\)) = 90\%
-- \textbf{Specificity} (\(P(\text{Negative Test} \mid \text{No Default})\)) = 95\%
-- \textbf{Prevalence of Default} (\(P(\text{Default})\)) = 2\%
-
-We need to calculate:
-1. The probability that a borrower flagged as likely to default will actually default.
-2. The total cost of evaluating 10,000 borrowers, where:
-   - The average loss per defaulted loan is \$200,000.
-   - The cost to run the test for each borrower is \$500.
-
-\section*{Solution}
-
-\subsection*{1. Probability of Default Given a Positive Test}
-
-Using Bayes' Theorem, we have:
-
-\[
-P(\text{Default} \mid \text{Positive Test}) = \frac{P(\text{Positive Test} \mid \text{Default}) \cdot P(\text{Default})}{P(\text{Positive Test})}
-\]
-
-Where:
-\[
-P(\text{Positive Test}) = P(\text{Positive Test} \mid \text{Default}) \cdot P(\text{Default}) + P(\text{Positive Test} \mid \text{No Default}) \cdot P(\text{No Default})
-\]
-
-Given:
-\[
-P(\text{Positive Test} \mid \text{Default}) = 0.90, \quad P(\text{Default}) = 0.02
-\]
-\[
-P(\text{Positive Test} \mid \text{No Default}) = 1 - \text{Specificity} = 1 - 0.95 = 0.05
-\]
-\[
-P(\text{No Default}) = 1 - P(\text{Default}) = 1 - 0.02 = 0.98
-\]
-
-Substitute these values:
-
-\[
-P(\text{Positive Test}) = (0.90 \times 0.02) + (0.05 \times 0.98) = 0.018 + 0.049 = 0.067
-\]
-
-Thus:
-
-\[
-P(\text{Default} \mid \text{Positive Test}) = \frac{0.90 \times 0.02}{0.067} \approx 0.2687 \text{ or } 26.87\%
-\]
-
-\subsection*{2. Total First-Year Cost for Evaluating 10,000 Borrowers}
-
-Given:
-- Average loss per defaulted loan = \$200,000
-- Cost of test per borrower = \$500
-- Number of borrowers = 10,000
-
-First, calculate the total test cost:
-
-\[
-\text{Total Test Cost} = 10,000 \times 500 = 5,000,000
-\]
-
-Then, calculate the expected loss cost:
-
-\[
-\text{Expected Defaults in Flagged Positives} = P(\text{Default} \mid \text{Positive Test}) \times 10,000 \times 0.02
-\]
-\[
-= 0.2687 \times 10,000 \times 0.02 = 53.74
-\]
-
-\[
-\text{Expected Loss Cost} = 53.74 \times 200,000 \approx 10,747,462.69
-\]
-
-So, the total cost for the first year is:
-
-\[
-\text{Total First-Year Cost} = \text{Total Test Cost} + \text{Expected Loss Cost} = 5,000,000 + 10,747,462.69 = 15,747,462.69
-\]
-
-\end{document}
-
+Here is the solution using R Language:
 
 
 ```{r}
 # Given values
-sensitivity <- 0.90  # P(Test Positive | Default)
-specificity <- 0.95  # P(Test Negative | No Default)
-prevalence <- 0.02   # P(Default)
-non_default_prevalence <- 1 - prevalence  # P(No Default)
+sensitivity <- 0.90
+specificity <- 0.95
+prevalence <- 0.02
 
-# Calculate P(Test Positive)
-p_test_positive <- (sensitivity * prevalence) + ((1 - specificity) * non_default_prevalence)
+# Complement of prevalence (probability of no default)
+no_default_prevalence <- 1 - prevalence
 
-# Calculate P(Default | Test Positive) using Bayes' Theorem
-ppv <- (sensitivity * prevalence) / p_test_positive
+# Probability of a positive test result given no default (False Positive Rate)
+false_positive_rate <- 1 - specificity
+
+# Probability of a positive result (P(Positive))
+p_positive <- (sensitivity * prevalence) + (false_positive_rate * no_default_prevalence)
+
+# Positive Predictive Value (PPV): P(Default | Positive)
+ppv <- (sensitivity * prevalence) / p_positive
 ppv
 
-```
+# Cost calculations
+cost_per_test <- 500  # Cost in dollars
+num_borrowers <- 10000  # Number of borrowers evaluated
 
-```{r}
-# Cost values
-loss_per_default <- 200000  # Average loss per defaulted loan
-test_cost_per_borrower <- 500  # Cost to run the credit scoring test on each borrower
-num_borrowers <- 10000  # Number of borrowers
+# Total cost for evaluating all borrowers
+total_testing_cost <- cost_per_test * num_borrowers
 
-# Expected defaults in flagged positives (PPV * flagged positives)
-expected_defaults_in_flagged <- ppv * num_borrowers * prevalence
+# Expected number of borrowers flagged as likely to default
+expected_flagged_as_default <- p_positive * num_borrowers
 
-# Total cost: Test cost for all borrowers + Expected losses from defaults
-total_test_cost <- num_borrowers * test_cost_per_borrower
-expected_loss_cost <- expected_defaults_in_flagged * loss_per_default
-total_first_year_cost <- total_test_cost + expected_loss_cost
+# Expected number of actual defaults among flagged borrowers
+expected_actual_defaults <- ppv * expected_flagged_as_default
 
+# Average loss per defaulted loan
+loss_per_default <- 200000  # Loss in dollars
+
+# Total expected loss due to defaults
+total_loss_due_to_defaults <- expected_actual_defaults * loss_per_default
+
+# Total first-year cost (testing cost + expected loss due to defaults)
+total_first_year_cost <- total_testing_cost + total_loss_due_to_defaults
 total_first_year_cost
 
+
 ```
+
 
 ***
 
-### Binomial:
+### **Binomial:**
 
 **Problem Statement:**
 
@@ -152,11 +85,17 @@ The probability that a stock will pay a dividend in any given quarter is 0.7. Wh
 **Solution:**
 
 The probability that a stock will pay a dividend in any given quarter is 0.7. Over 8 quarters, we need to calculate:
+
 1. The probability that the stock pays dividends exactly 6 times.
+
 2. The probability that it pays dividends 6 or more times.
+
 3. The probability that it pays dividends fewer than 6 times.
+
 4. The expected number of dividend payments over 8 quarters.
+
 5. The standard deviation of dividend payments.
+
 
 The dividend payments follow a **Binomial distribution** where:
 \[
@@ -242,9 +181,9 @@ Substitute \( n = 8 \) and \( p = 0.7 \):
 
 Thus, the standard deviation of dividend payments over 8 quarters is approximately 1.2961.
 
-\end{document}
 
-R-Code:
+
+Here is the same solution using R language
 
 ```{r}
 # Given parameters
@@ -278,7 +217,7 @@ cat("Standard deviation of dividend payments:", round(std_deviation_dividends, 4
 
 ***
 
-### Poisson: 
+### **Poisson:**
 
 **Problem Statement: **
 
@@ -289,86 +228,18 @@ A financial analyst notices that there are an average of 12 trading days each mo
 A financial analyst observes that there are, on average, 12 trading days each month when a certain stock’s price increases by more than 2%. We need to calculate:
 
 1. The probability that exactly 4 such days occur in a given month.
+
 2. The probability that more than 12 such days occur in a given month.
+
 3. The expected number of such days in a 6-month period.
+
 4. The standard deviation of the number of such days.
+
 5. If an investment strategy requires at least 70 days of such price increases in a year for profitability, calculate the percent utilization and provide recommendations.
 
 We assume that the number of days follows a **Poisson distribution** with a mean \( \lambda = 12 \) (days per month).
 
-\section*{Solution}
-
-\subsection*{1. Probability of Exactly 4 Days in a Month}
-
-Using the Poisson probability formula:
-\[
-P(X = k) = \frac{\lambda^k e^{-\lambda}}{k!}
-\]
-
-Given \( \lambda = 12 \) and \( k = 4 \), we find \( P(X = 4) \):
-\[
-P(X = 4) = \frac{12^4 e^{-12}}{4!}
-\]
-\[
-\approx 0.0027
-\]
-
-So, the probability of exactly 4 days in a month with a price increase of over 2% is approximately 0.27%.
-
-\subsection*{2. Probability of More Than 12 Days in a Month}
-
-To find \( P(X > 12) \), we use:
-\[
-P(X > 12) = 1 - P(X \leq 12)
-\]
-
-Using cumulative probability for the Poisson distribution:
-\[
-P(X > 12) \approx 0.384
-\]
-
-Therefore, the probability of more than 12 such days is approximately 38.4%.
-
-\subsection*{3. Expected Number of Days in a 6-Month Period}
-
-The expected value for a Poisson distribution over 6 months is:
-\[
-E(X) = 6 \cdot \lambda = 6 \cdot 12 = 72
-\]
-
-Thus, we expect approximately 72 days over a 6-month period.
-
-\subsection*{4. Standard Deviation of the Number of Days}
-
-The standard deviation \( \sigma \) for a Poisson distribution is given by:
-\[
-\sigma = \sqrt{\lambda}
-\]
-
-For a 6-month period:
-\[
-\sigma = \sqrt{6 \cdot 12} = \sqrt{72} \approx 8.49
-\]
-
-So, the standard deviation over 6 months is approximately 8.49 days.
-
-\subsection*{5. Percent Utilization and Recommendation}
-
-If an investment strategy requires at least 70 days of such price increases in a year, the expected number of days is:
-\[
-E(X) = 12 \cdot 12 = 144 \quad \text{(days per year)}
-\]
-
-The percent utilization is:
-\[
-\text{Utilization} = \frac{70}{144} \times 100 \approx 48.6\%
-\]
-
-**Recommendation**: Given that the percent utilization is approximately 48.6%, the strategy is likely feasible if the target is 70 days, as the expected value is well above this threshold. However, due to variability, further analysis on monthly variances or a contingency plan is advised.
-
-\end{document}
-
-R-Code:
+Here is the solution using R-Code:
 
 ```{r}
 # Given parameters
@@ -388,7 +259,7 @@ expected_6_months <- 6 * lambda
 cat("Expected number of days in a 6-month period:", expected_6_months, "\n")
 
 # 4. Standard deviation of the number of days in a 6-month period
-std_dev_6_months <- sqrt(expected_6_months)
+std_dev_6_months <- sqrt(lambda)
 cat("Standard deviation of days over 6 months:", round(std_dev_6_months, 4), "\n")
 
 # 5. Percent utilization and recommendation
@@ -400,9 +271,11 @@ cat("Percent utilization for 70 target days:", round(percent_utilization, 2), "%
 
 ```
 
+**Recommendation:** The investment strategy is likely to be profitable based on the expected number of days.
+
 ***
 
-### Hypergeometric
+### **Hypergeometric:**
 
 **Problem Statement:**
 
@@ -413,6 +286,7 @@ A hedge fund has a portfolio of 25 stocks, with 15 categorized as high-risk and 
 A hedge fund has a portfolio of 25 stocks, with 15 categorized as high-risk and 10 as low-risk. The fund manager randomly selects 7 stocks to monitor. We are asked to determine:
 
 1. The probability that exactly 5 of the selected stocks are high-risk.
+
 2. The expected number of high-risk and low-risk stocks in the sample.
 
 This scenario follows a **Hypergeometric distribution**, where:
@@ -461,9 +335,8 @@ E(\text{low-risk}) = n \cdot \frac{N - K}{N} = 7 \cdot \frac{10}{25} = 2.8
 
 Therefore, we expect to select approximately 4.2 high-risk and 2.8 low-risk stocks.
 
-\end{document}
 
-R-Code:
+Her is the same solution using R-Code:
 
 
 ```{r}
@@ -487,7 +360,7 @@ cat("Expected number of low-risk stocks:", round(expected_low_risk, 2), "\n")
 
 ***
 
-### Geometric:
+### **Geometric:**
 
 **Problem Statement:**
 
@@ -498,8 +371,11 @@ The probability that a bond defaults in any given year is 0.5%. A portfolio mana
 The probability that a bond defaults in any given year is 0.5%. A portfolio manager holds this bond for a specified period. We are asked to determine:
 
 1. The probability that the bond will default within 10 years.
+
 2. The probability that the bond will default within 15 years.
+
 3. The expected number of years before the bond defaults.
+
 4. The probability that the bond defaults within 2 years, given that it has already survived for 10 years.
 
 This scenario follows a **Geometric distribution**, where:
@@ -564,9 +440,9 @@ P(X \leq 2) = 1 - (0.995)^2 \approx 0.009975
 
 Therefore, the probability that the bond defaults in the next 2 years, given it has survived 10 years, is approximately 0.9975%.
 
-\end{document}
 
-R-Code:
+
+Here is the same solution using R-Code:
 
 ```{r}
 # Given parameters
@@ -595,7 +471,7 @@ cat("Probability of default within 2 years after surviving 10 years:", round(pro
 
 ***
 
-###Poisson: 
+### **Poisson:**
 
 **Problem Statement:**
 
@@ -606,6 +482,7 @@ A high-frequency trading algorithm experiences a system failure about once every
 A high-frequency trading algorithm experiences a system failure once every 1500 trading hours on average. We need to calculate:
 
 1. The probability that the algorithm will experience more than two failures in 1500 hours.
+
 2. The expected number of failures over 1500 hours.
 
 Since this is a rare event over a fixed interval, we can model the number of failures with a **Poisson distribution**. The average rate (\( \lambda \)) for 1500 hours is 1 failure.
@@ -681,7 +558,7 @@ cat("Probability of more than 2 failures in 1500 hours:", round(prob_more_than_2
 
 ```
 
-### Uniform Distribution: 
+### **Uniform Distribution:**
 
 **Problem Statement:**
 
@@ -692,7 +569,9 @@ An investor is trying to time the market and is monitoring a stock that they bel
 An investor monitors a stock expected to reach a target price between 20 and 60 days with equal probability for any day in this range. We are asked to calculate:
 
 1. The probability that the stock will reach the target price in more than 40 days.
+
 2. Given it hasn’t reached the target price by day 40, the probability it will reach it in the next 10 days.
+
 3. The expected time for the stock to reach the target price.
 
 Since the stock reaching the target price is uniformly distributed, we can use the properties of the **Uniform distribution** on the interval \([a, b]\).
@@ -746,7 +625,6 @@ E(X) = \frac{20 + 60}{2} = \frac{80}{2} = 40
 
 So, the expected time for the stock to reach the target price is 40 days.
 
-\end{document}
 
 R-Code:
 
@@ -771,7 +649,7 @@ cat("Expected time to reach the target price:", expected_time, "\n")
 
 ```
 
-### Exponential Distribution: 
+### **Exponential Distribution:** 
 
 **Problem Statement:**
 
@@ -783,8 +661,11 @@ A financial model estimates that the lifetime of a successful start-up before it
 A financial model estimates that the lifetime of a successful start-up before it either goes public or fails follows an Exponential distribution with an expected lifetime of 8 years. We need to calculate:
 
 1. The expected time until the start-up either goes public or fails.
+
 2. The standard deviation of the lifetime.
+
 3. The probability that the start-up will go public or fail after 6 years.
+
 4. Given that the start-up has survived for 6 years, the probability it will go public or fail in the next 2 years.
 
 \section*{Solution}
@@ -836,7 +717,6 @@ P(X \leq 2) = 1 - e^{-0.125 \times 2} = 1 - e^{-0.25} \approx 0.2212
 
 Thus, given that the start-up has already survived 6 years, there is approximately a 22.12% probability that it will go public or fail in the next 2 years.
 
-\end{document}
 
 R-Code:
 
@@ -865,3 +745,833 @@ cat("Probability of going public or failing in the next 2 years given survival f
 
 ```
 
+***
+***
+
+## **Problem 2:**
+
+### **Product Selection:**
+
+**Problem Statement:**
+
+A company produces 5 different types of green pens and 7 different types of red pens. The marketing team needs to create a new promotional package that includes 5 pens. How many different ways can the package be created if it contains fewer than 2 green pens?
+
+**Solution:**
+
+
+```{r}
+# Number of ways to select 5 red pens from 7
+case1 <- choose(7, 5)
+
+# Number of ways to select 1 green pen from 5 and 4 red pens from 7
+case2 <- choose(5, 1) * choose(7, 4)
+
+# Total number of ways
+total_ways <- case1 + case2
+total_ways
+
+```
+
+***
+
+### **Team Formation for a Project:**
+
+**Problem Statement:**
+
+A project committee is being formed within a company that includes 14 senior managers and 13 junior managers. How many ways can a project team of 5 members be formed if at least 4 of the members must be junior managers?
+
+**Solution:**
+
+```{r}
+# Case 1: 4 junior managers from 13 and 1 senior manager from 14
+case1 <- choose(13, 4) * choose(14, 1)
+
+# Case 2: 5 junior managers from 13 and 0 senior managers
+case2 <- choose(13, 5)
+
+# Total number of ways
+total_ways <- case1 + case2
+total_ways
+
+```
+
+***
+
+### **Marketing Campaign Outcomes:**
+
+**Problem Statement:**
+
+A marketing campaign involves three stages: first, a customer is sent 5 email offers; second, the customer is targeted with 2 different online ads; and third, the customer is presented with 3 personalized product recommendations. If the email offers, online ads, and product recommendations are selected randomly, how many different possible outcomes are there for the entire campaign?
+
+**Solution:**
+
+```{r}
+# Number of email offers
+email_offers <- 5
+
+# Number of online ads
+online_ads <- 2
+
+# Number of product recommendations
+product_recommendations <- 3
+
+# Total possible outcomes
+total_outcomes <- email_offers * online_ads * product_recommendations
+total_outcomes
+
+```
+
+***
+
+### **Product Defect Probability:**
+
+**Problem Statement:**
+
+A quality control team draws 3 products from a batch without replacement. What is the probability that at least one of the products drawn is defective if the defect rate is known to be consistent? Express your answer as a fraction or a decimal number rounded to four decimal places.
+
+**Solution:**
+
+
+
+```{r}
+# Defect rate
+p <- 0.1
+
+# Probability that at least one product is defective
+prob_at_least_one_defective <- 1 - (1 - p)^3
+round(prob_at_least_one_defective, 4)
+
+```
+
+***
+
+### **Business Strategy Choices:**
+
+A business strategist is choosing potential projects to invest in, focusing on 17 high-risk, high-reward projects and 14 low-risk, steady-return projects.
+
+Step 1: How many different combinations of 5 projects can the strategist select?
+
+Step 2: How many different combinations of 5 projects can the strategist select if they want at least one low-risk project?
+
+```{r}
+# Total projects
+total_projects <- 31
+
+# High-risk and low-risk projects
+high_risk <- 17
+low_risk <- 14
+
+# Step 1: Total combinations of 5 projects from 31
+total_combinations <- choose(total_projects, 5)
+
+# Step 2: Combinations of 5 projects with only high-risk projects
+high_risk_only <- choose(high_risk, 5)
+# Combinations with at least one low-risk project
+at_least_one_low_risk <- total_combinations - high_risk_only
+
+# Output results
+total_combinations
+at_least_one_low_risk
+
+
+```
+
+***
+
+### **Event Scheduling:**
+
+**Problem Statement:**
+
+A business conference needs to schedule 9 different keynote sessions from three different industries: technology, finance, and healthcare. There are 4 potential technology sessions, 104 finance sessions, and 17 healthcare sessions to choose from. How many different schedules can be made? Express your answer in scientific notation rounding to the hundredths place.
+
+**Solution:**
+
+```{r}
+# Calculate the combinations for each category
+technology_choices <- choose(4, 1)
+finance_choices <- choose(104, 4)
+healthcare_choices <- choose(17, 4)
+
+# Calculate the total number of schedules
+total_schedules <- technology_choices * finance_choices * healthcare_choices
+
+# Format in scientific notation, rounded to hundredths
+total_schedules_scientific <- format(total_schedules, scientific = TRUE, digits = 3)
+cat("The total number of different schedules is approximately:", total_schedules_scientific, "\n")
+
+
+
+```
+
+***
+
+### Book Selection for Corporate Training
+
+**Problem Statement:**
+
+An HR manager needs to create a reading list for a corporate leadership training program, which includes 13 books in total. The books are categorized into 6 novels, 6 business case studies, 7 leadership theory books, and 5 strategy books.
+
+**Solution:**
+
+Step 1: If the manager wants to include no more than 4 strategy books, how many different reading schedules are possible? Express your answer in scientific notation rounding to the hundredths place.
+
+```{r}
+# Number of books in each category
+novels <- 6
+business_case_studies <- 6
+leadership_theory <- 7
+strategy <- 5
+
+# Initialize total schedules
+total_schedules <- 0
+
+# Loop over each possible count of strategy books from 0 to 4
+for (s in 0:4) {
+  # Calculate the number of ways to select `s` strategy books from 5
+  strategy_choices <- choose(strategy, s)
+  
+  # Remaining books needed from other categories to reach 13 books
+  remaining_books_needed <- 13 - s
+  
+  # Calculate the number of ways to select the remaining books from novels, business case studies, and leadership theory
+  remaining_choices <- choose(novels + business_case_studies + leadership_theory, remaining_books_needed)
+  
+  # Multiply the choices for strategy books with the choices for remaining books
+  total_schedules <- total_schedules + (strategy_choices * remaining_choices)
+}
+
+# Display result in scientific notation, rounded to two decimal places
+paste0("Answer: ", format(total_schedules, scientific = TRUE, digits = 3))
+
+```
+
+
+Step 2: If the manager wants to include all 6 business case studies, how many different reading schedules are possible? Express your answer in scientific notation rounding to the hundredths place.
+
+```{r}
+# Fixed choice of all 6 business case studies
+business_case_choices <- 1
+
+# Calculate the number of ways to select 7 more books from novels, leadership theory, and strategy books
+remaining_choices_step2 <- choose(novels + leadership_theory + strategy, 7)
+
+# Total schedules when all 6 business case studies are included
+total_schedules_step2 <- business_case_choices * remaining_choices_step2
+
+# Display result in scientific notation, rounded to two decimal places
+paste0("Answer: ", format(total_schedules_step2, scientific = TRUE, digits = 3))
+
+```
+
+***
+
+### Product Arrangement
+
+**Problem Statement:**
+
+A retailer is arranging 10 products on a display shelf. There are 5 different electronic gadgets and 5 different accessories. What is the probability that all the gadgets are placed together and all the accessories are placed together on the shelf? Express your answer as a fraction or a decimal number rounded to four decimal places.
+
+**Solution:**
+
+```{r}
+# Factorials of the necessary numbers
+total_arrangements <- factorial(10)
+favorable_arrangements <- factorial(2) * factorial(5) * factorial(5)
+
+# Probability calculation
+probability <- favorable_arrangements / total_arrangements
+round(probability, 4)
+
+```
+***
+
+### **Expected Value of a Business Deal:** 
+
+A company is evaluating a deal where they either gain $4 for every successful contract or lose $16 for every unsuccessful contract. A "successful" contract is defined as drawing a queen or lower from a standard deck of cards. (Aces are considered the highest card in the deck.)
+
+Step 1: Find the expected value of the deal. Round your answer to two decimal places. Losses must be expressed as negative values.
+
+```{r}
+# Probabilities of success and failure
+p_success <- 48 / 52
+p_failure <- 4 / 52
+
+# Gains and losses
+gain_success <- 4
+loss_failure <- -16
+
+# Expected value calculation
+expected_value <- (p_success * gain_success) + (p_failure * loss_failure)
+round(expected_value, 2)
+
+```
+Step 2: If the company enters into this deal 833 times, how much would they expect to win or lose? Round your answer to two decimal places. Losses must be expressed as negative values.
+
+
+```{r}
+# Number of deals
+num_deals <- 833
+
+# Total expected outcome
+total_expected_outcome <- expected_value * num_deals
+round(total_expected_outcome, 2)
+```
+
+***
+
+## **Problem 3:**
+
+### **Supply Chain Risk Assessment:** 
+
+Let $X_1$,$X_2$,$X_3$,....$X_n$ represent the lead times (in days) for the delivery of key components from n = 5 different suppliers. Each lead time is uniformly distributed across a range of 1 to k = 20 days, reflecting the uncertainty in delivery times. Let Y denote the minimum delivery time among all suppliers. Understanding the distribution of Y is crucial for assessing the earliest possible time you can begin production. Determine the distribution of Y to better manage your supply chain and minimize downtime.
+
+Step-by-Step Calculation for the Distribution of \( Y \)
+
+Step 1: Distribution of Each Supplier’s Lead Time
+Each supplier's lead time \( X_i \) follows a uniform distribution \( U(1, k) \), where \( k = 20 \).
+
+- **PDF** of \( X_i \):
+  \[
+  f_{X_i}(x) = \frac{1}{k - 1}, \quad \text{for } 1 \leq x \leq k.
+  \]
+
+- **CDF** of \( X_i \):
+  \[
+  F_{X_i}(x) = \frac{x - 1}{k - 1}, \quad \text{for } 1 \leq x \leq k.
+  \]
+
+---
+
+Step 2: Definition of \( Y \)
+
+The minimum \( Y \) of independent variables \( X_1, X_2, \ldots, X_n \) has a cumulative distribution function:
+\[
+F_Y(y) = P(Y \leq y).
+\]
+
+The event \( Y \leq y \) means that at least one of the \( X_i \) is less than or equal to \( y \). Using the independence of \( X_1, X_2, \ldots, X_n \), the complementary probability is:
+\[
+P(Y > y) = P(X_1 > y, X_2 > y, \ldots, X_n > y).
+\]
+
+---
+
+Step 3: Calculate \( P(Y > y) \)
+For any single \( X_i \):
+\[
+P(X_i > y) = 1 - P(X_i \leq y) = 1 - F_{X_i}(y).
+\]
+Substituting \( F_{X_i}(y) = \frac{y - 1}{k - 1} \):
+\[
+P(X_i > y) = 1 - \frac{y - 1}{k - 1} = \frac{k - y}{k - 1}.
+\]
+
+Since the \( X_i \)'s are independent, the probability that all \( n \) variables are greater than \( y \) is:
+\[
+P(Y > y) = P(X_1 > y) \cdot P(X_2 > y) \cdot \ldots \cdot P(X_n > y).
+\]
+\[
+P(Y > y) = \left( \frac{k - y}{k - 1} \right)^n.
+\]
+
+---
+
+Step 4: Calculate \( F_Y(y) \)
+Using the relationship \( F_Y(y) = 1 - P(Y > y) \):
+\[
+F_Y(y) = 1 - \left( \frac{k - y}{k - 1} \right)^n, \quad \text{for } 1 \leq y \leq k.
+\]
+
+---
+
+Step 5: Calculate \( f_Y(y) \)
+The PDF of \( Y \) is the derivative of the CDF \( F_Y(y) \):
+\[
+f_Y(y) = \frac{d}{dy} F_Y(y).
+\]
+
+Differentiate \( F_Y(y) = 1 - \left( \frac{k - y}{k - 1} \right)^n \):
+\[
+f_Y(y) = n \cdot \frac{1}{k - 1} \cdot \left( \frac{k - y}{k - 1} \right)^{n - 1}.
+\]
+
+---
+
+Step 6: Final Formulas
+- **CDF** of \( Y \):
+  \[
+  F_Y(y) = 1 - \left( \frac{k - y}{k - 1} \right)^n, \quad \text{for } 1 \leq y \leq k.
+  \]
+
+- **PDF** of \( Y \):
+  \[
+  f_Y(y) = n \cdot \frac{1}{k - 1} \cdot \left( \frac{k - y}{k - 1} \right)^{n - 1}, \quad \text{for } 1 \leq y \leq k.
+  \]
+
+---
+
+Step 7: Example Calculation (with \( n = 5, k = 20 \)):
+1. **CDF at \( y = 5 \):**
+   \[
+   F_Y(5) = 1 - \left( \frac{20 - 5}{20 - 1} \right)^5 = 1 - \left( \frac{15}{19} \right)^5.
+   \]
+
+2. **PDF at \( y = 5 \):**
+   \[
+   f_Y(5) = 5 \cdot \frac{1}{19} \cdot \left( \frac{15}{19} \right)^4.
+   \]
+
+---
+
+Step 8: Visualization in R
+
+
+```{r}
+# Parameters
+n <- 5  # Number of suppliers
+k <- 20 # Maximum delivery time
+
+# Theoretical PDF of Y
+f_Y <- function(y, n, k) {
+  n * (1 / (k - 1)) * (1 - (y - 1) / (k - 1))^(n - 1)
+}
+
+# Simulating minimum delivery times
+set.seed(123)
+num_simulations <- 100000
+lead_times <- matrix(runif(num_simulations * n, 1, k), ncol = n)
+min_delivery_times <- apply(lead_times, 1, min)
+
+# Plot theoretical vs empirical PDF
+y_vals <- seq(1, k, length.out = 1000)
+theoretical_pdf <- f_Y(y_vals, n, k)
+
+hist(min_delivery_times, breaks = 30, probability = TRUE, col = "lightblue",
+     main = "PDF of Minimum Delivery Time (Simulated vs Theoretical)",
+     xlab = "Minimum Delivery Time (Days)")
+lines(y_vals, theoretical_pdf, col = "red", lwd = 2)
+legend("topright", legend = c("Theoretical PDF", "Empirical PDF"),
+       col = c("red", "lightblue"), lwd = 2, fill = c(NA, "lightblue"))
+
+```
+
+```{r}
+# Set parameters
+n <- 5        # Number of suppliers
+k <- 20       # Maximum lead time (days)
+num_samples <- 100000  # Number of simulations
+
+# Generate random samples for the lead times for n suppliers
+set.seed(123)  # For reproducibility
+lead_times <- matrix(runif(num_samples * n, min = 1, max = k), ncol = n)
+
+# Find the minimum lead time for each simulation
+min_lead_times <- apply(lead_times, 1, min)
+
+# Plot the distribution of Y (minimum lead time)
+hist(min_lead_times, breaks = 50, main = "Distribution of Minimum Lead Time (Y)",
+     xlab = "Minimum Lead Time (Days)", ylab = "Frequency", col = "lightblue",
+     border = "black")
+
+# Display summary statistics
+summary(min_lead_times)
+
+```
+
+
+
+***
+
+### **Maintenance Planning for Critical Equipment:**
+
+Your organization owns a critical piece of equipment, such as a high-capacity photocopier (for a law firm) or an MRI machine (for a healthcare provider). The manufacturer estimates the expected lifetime of this equipment to be 8 years, meaning that, on average, you expect one failure every 8 years. It's essential to understand the likelihood of failure over time to plan for maintenance and replacements.
+
+#### **Geometric Model:**
+
+Calculate the probability that the machine will not fail for the first 6 years. Also, provide the expected value and standard deviation. This model assumes each year the machine either fails or does not, independently of previous years.
+
+```{r}
+# Parameters
+p <- 1 / 8  # Failure probability
+
+# Probability of no failure for the first 6 years
+geom_prob <- (1 - p)^6
+
+# Expected value and standard deviation
+geom_exp <- 1 / p
+geom_sd <- sqrt((1 - p) / p^2)
+
+# Results
+cat("Geometric Model:\n")
+cat("P(X > 6):", round(geom_prob, 4), "\n")
+cat("Expected Value (E[X]):", round(geom_exp, 2), "\n")
+cat("Standard Deviation (SD):", round(geom_sd, 2), "\n")
+
+```
+
+
+#### **Exponential Model:**
+
+Calculate the probability that the machine will not fail for the first 6 years. Provide the expected value and standard deviation, modeling the time to failure as a continuous process.
+
+```{r}
+# Parameters
+lambda <- 1 / 8  # Failure rate
+
+# Probability of no failure for the first 6 years
+exp_prob <- exp(-lambda * 6)
+
+# Expected value and standard deviation
+exp_exp <- 1 / lambda
+exp_sd <- 1 / lambda
+
+# Results
+cat("\nExponential Model:\n")
+cat("P(T > 6):", round(exp_prob, 4), "\n")
+cat("Expected Value (E[T]):", round(exp_exp, 2), "\n")
+cat("Standard Deviation (SD):", round(exp_sd, 2), "\n")
+
+```
+
+
+#### **Binomial Model:** 
+
+Calculate the probability that the machine will not fail during the first 6 years, given that it is expected to fail once every 8 years. Provide the expected value and standard deviation, assuming a fixed number of trials (years) with a constant failure probability each year.
+
+```{r}
+# Parameters
+n <- 6
+k <- 0
+
+# Probability of no failure in the first 6 years
+binom_prob <- dbinom(k, n, p)
+
+# Expected value and standard deviation
+binom_exp <- n * p
+binom_sd <- sqrt(n * p * (1 - p))
+
+# Results
+cat("\nBinomial Model:\n")
+cat("P(X = 0):", round(binom_prob, 4), "\n")
+cat("Expected Value (E[X]):", round(binom_exp, 2), "\n")
+cat("Standard Deviation (SD):", round(binom_sd, 2), "\n")
+
+```
+
+
+#### **Poisson Model:**
+
+Calculate the probability that the machine will not fail during the first 6 years, modeling the failure events as a Poisson process. Provide the expected value and standard deviation.
+
+```{r}
+# Parameters
+mu <- lambda * 6  # Mean failure count
+
+# Probability of no failures in the first 6 years
+poisson_prob <- dpois(0, mu)
+
+# Expected value and standard deviation
+poisson_exp <- mu
+poisson_sd <- sqrt(mu)
+
+# Results
+cat("\nPoisson Model:\n")
+cat("P(X = 0):", round(poisson_prob, 4), "\n")
+cat("Expected Value (E[X]):", round(poisson_exp, 2), "\n")
+cat("Standard Deviation (SD):", round(poisson_sd, 2), "\n")
+
+```
+
+***
+
+## Problem 4:
+
+### 1.  Scenario: 
+
+You are managing two independent servers in a data center. The time until the next failure for each server follows an exponential distribution with different rates:
+
+Server A has a failure rate of \(\lambda_A = 0.5\)  failures per hour.
+Server B has a failure rate of \(\lambda_B = 0.3\) failures per hour.
+
+What is the distribution of the total time until both servers have failed at least once? Use the moment generating function (MGF) to find the distribution of the sum of the times to failure.
+
+**Solution:**
+
+Let \(T_A\) and \(T_B\) denote the time to failure for Server A and Server B, respectively. \(T_A \sim \text{Exponential}(\lambda_A)\) and \(T_B \sim \text{Exponential}(\lambda_B)\), where \(\lambda_A = 0.5\) and \(\lambda_B = 0.3\). The total time to failure is \(T = T_A + T_B\).
+
+The moment-generating function (MGF) of an exponential random variable \(T \sim \text{Exponential}(\lambda)\) is:
+\[
+M_T(s) = \frac{\lambda}{\lambda - s}, \quad s < \lambda.
+\]
+Since \(T_A\) and \(T_B\) are independent, the MGF of \(T = T_A + T_B\) is the product of their MGFs:
+\[
+M_T(s) = M_{T_A}(s) \cdot M_{T_B}(s).
+\]
+
+Substituting the MGFs for \(T_A\) and \(T_B\):
+\[
+M_T(s) = \frac{\lambda_A}{\lambda_A - s} \cdot \frac{\lambda_B}{\lambda_B - s}.
+\]
+Substituting \(\lambda_A = 0.5\) and \(\lambda_B = 0.3\):
+\[
+M_T(s) = \frac{0.5}{0.5 - s} \cdot \frac{0.3}{0.3 - s}.
+\]
+
+To find the probability density function (PDF) of \(T\), we perform partial fraction decomposition:
+\[
+M_T(s) = \frac{A}{0.5 - s} + \frac{B}{0.3 - s}.
+\]
+Equating terms:
+\[
+\frac{0.15}{(0.5 - s)(0.3 - s)} = \frac{A}{0.5 - s} + \frac{B}{0.3 - s}.
+\]
+
+Multiply through by \((0.5 - s)(0.3 - s)\):
+\[
+0.15 = A(0.3 - s) + B(0.5 - s).
+\]
+
+Expanding:
+\[
+0.15 = 0.3A - As + 0.5B - Bs.
+\]
+
+Equating coefficients of \(s\) and the constant terms:
+\[
+-A - B = 0, \quad 0.3A + 0.5B = 0.15.
+\]
+
+From \(-A - B = 0\), we get \(B = -A\). Substitute into \(0.3A + 0.5B = 0.15\):
+\[
+0.3A + 0.5(-A) = 0.15,
+\]
+\[
+-0.2A = 0.15, \quad A = -0.75.
+\]
+Thus, \(B = 0.75\).
+
+Substituting back:
+\[
+M_T(s) = \frac{-0.75}{0.5 - s} + \frac{0.75}{0.3 - s}.
+\]
+
+The probability density function (PDF) of \(T\) is obtained by taking the inverse Laplace transform:
+\[
+f_T(t) = -0.75 \cdot 0.5 e^{-0.5t} + 0.75 \cdot 0.3 e^{-0.3t}.
+\]
+
+Simplify:
+\[
+f_T(t) = 0.375 e^{-0.3t} - 0.375 e^{-0.5t}, \quad t \geq 0.
+\]
+
+Therefore, the total time \(T = T_A + T_B\) has the PDF:
+\[
+f_T(t) = 0.375 \left(e^{-0.3t} - e^{-0.5t}\right), \quad t \geq 0.
+\]
+
+***
+
+### **Sum of Independent Normally Distributed Random Variables:**
+
+**Scenario:** An investment firm is analyzing the returns of two independent assets, Asset X and Asset Y. The returns on these assets are normally distributed:
+
+Asset X: 
+Asset Y: 
+
+**Question:** Find the distribution of the combined return of the portfolio consisting of these two assets using the moment generating function (MGF).
+
+
+Given that \(X\) and \(Y\) are independent normally distributed random variables, we have:
+\[
+X \sim N(\mu_X = 5\%, \sigma_X^2 = 4\%) \quad \text{and} \quad Y \sim N(\mu_Y = 7\%, \sigma_Y^2 = 9\%).
+\]
+
+The sum of two independent normal random variables, \(Z = X + Y\), is also normally distributed with the mean and variance given by:
+\[
+\mu_Z = \mu_X + \mu_Y, \quad \sigma_Z^2 = \sigma_X^2 + \sigma_Y^2.
+\]
+
+\textbf{Step 1: Calculate the mean of \(Z\)}
+\[
+\mu_Z = \mu_X + \mu_Y = 5\% + 7\% = 12\%.
+\]
+
+\textbf{Step 2: Calculate the variance of \(Z\)}
+\[
+\sigma_Z^2 = \sigma_X^2 + \sigma_Y^2 = 4\% + 9\% = 13\%.
+\]
+
+\textbf{Step 3: Standard deviation of \(Z\)}
+\[
+\sigma_Z = \sqrt{\sigma_Z^2} = \sqrt{13\%} \approx 3.61\%.
+\]
+
+Thus, the distribution of the combined return \(Z\) is given by:
+\[
+Z \sim N(\mu_Z = 12\%, \sigma_Z^2 = 13\%).
+\]
+
+***
+
+### **Scenario:**
+
+A call center receives calls independently from two different regions. The number of calls received from Region A and Region B in an hour follows a Poisson distribution:
+
+Region A: 
+Region B: 
+
+**Question:** Determine the distribution of the total number of calls received in an hour from both regions using the moment generating function (MGF).
+
+Given that the number of calls received from Region A and Region B in an hour follows a Poisson distribution:
+\[
+X_A \sim \text{Poisson}(\lambda_A = 3) \quad \text{and} \quad X_B \sim \text{Poisson}(\lambda_B = 5).
+\]
+
+The total number of calls received in an hour from both regions is:
+\[
+X = X_A + X_B.
+\]
+
+Since the sum of two independent Poisson random variables also follows a Poisson distribution with the rate parameter equal to the sum of the individual rates, we have:
+\[
+X \sim \text{Poisson}(\lambda_A + \lambda_B).
+\]
+
+\textbf{Step 1: Calculate the combined rate parameter}
+\[
+\lambda_X = \lambda_A + \lambda_B = 3 + 5 = 8.
+\]
+
+\textbf{Step 2: Moment-Generating Function (MGF) of the Poisson Distribution}
+
+The MGF of a Poisson random variable \(X\) with parameter \(\lambda\) is given by:
+\[
+M_X(t) = \exp(\lambda(e^t - 1)).
+\]
+
+For the total number of calls \(X = X_A + X_B\), the MGF is:
+\[
+M_X(t) = \exp\left((\lambda_A + \lambda_B)(e^t - 1)\right) = \exp\left(8(e^t - 1)\right).
+\]
+
+Thus, the total number of calls received in an hour from both regions follows a Poisson distribution with parameter:
+\[
+X \sim \text{Poisson}(\lambda = 8).
+\]
+
+***
+
+## Problem 5:
+
+###  Customer Retention and Churn Analysis
+
+**Scenario:** A telecommunications company wants to model the behavior of its customers regarding their likelihood to stay with the company (retention) or leave for a competitor (churn). The company segments its customers into three states:
+
+State 1: Active customers who are satisfied and likely to stay (Retention state).
+
+State 2: Customers who are considering leaving (At-risk state).
+
+State 3: Customers who have left (Churn state).
+
+The company has historical data showing the following monthly transition probabilities:
+
+From State 1 (Retention): 80% stay in State 1, 15% move to State 2, and 5% move to State 3.
+
+From State 2 (At-risk): 30% return to State 1, 50% stay in State 2, and 20% move to State 3.
+
+From State 3 (Churn): 100% stay in State 3.
+
+The company wants to analyze the long-term behavior of its customer base.
+
+**Question:** (a) Construct the transition matrix for this Markov Chain. (b) If a customer starts as satisfied (State 1), what is the probability that they will eventually churn (move to State 3)? (c) Determine the steady-state distribution of this Markov Chain. What percentage of customers can the company expect to be in each state in the long run?
+
+**Solution:**
+
+```{r warning=FALSE}
+# Transition matrix
+P <- matrix(c(0.80, 0.15, 0.05,
+              0.30, 0.50, 0.20,
+              0.00, 0.00, 1.00), 
+            nrow = 3, byrow = TRUE)
+
+# (b) Probability that a customer starting in State 1 eventually moves to State 3 (Churn)
+# Create the fundamental matrix for the transient states
+Q <- P[1:2, 1:2]  # Submatrix for transient states
+I <- diag(2)      # Identity matrix for transient states
+N <- solve(I - Q) # Fundamental matrix
+
+# Calculate the absorbing probabilities
+R <- P[1:2, 3, drop = FALSE]  # Submatrix for transitions to the absorbing state (State 3)
+B <- N %*% R                  # Absorbing probabilities for starting in States 1 and 2
+
+prob_churn_from_state_1 <- B[1]
+
+# (c) Steady-state distribution
+# Solving for the steady-state distribution: pi %*% P = pi
+library(expm)
+steady_state <- eigen(t(P))$vectors[,1]
+steady_state <- steady_state / sum(steady_state)  # Normalize to sum to 1
+
+# Results
+list(
+  Transition_Matrix = P,
+  Prob_Churn_From_State_1 = prob_churn_from_state_1,
+  Steady_State_Distribution = steady_state
+)
+
+```
+
+***
+
+### **Inventory Management in a Warehouse:**
+
+**Scenario:** A warehouse tracks the inventory levels of a particular product using a Markov Chain model. The inventory levels are categorized into three states:
+
+State 1: High inventory (More than 100 units in stock).
+
+State 2: Medium inventory (Between 50 and 100 units in stock).
+
+State 3: Low inventory (Less than 50 units in stock).
+
+The warehouse has the following transition probabilities for inventory levels from one month to the next:
+
+From State 1 (High): 70% stay in State 1, 25% move to State 2, and 5% move to State 3.
+
+From State 2 (Medium): 20% move to State 1, 50% stay in State 2, and 30% move to State 3.
+
+From State 3 (Low): 10% move to State 1, 40% move to State 2, and 50% stay in State 3.
+
+The warehouse management wants to optimize its restocking strategy by understanding the long-term distribution of inventory levels.
+
+**Question:** (a) Construct the transition matrix for this Markov Chain. (b) If the warehouse starts with a high inventory level (State 1), what is the probability that it will eventually end up in a low inventory level (State 3)? (c) Determine the steady-state distribution of this Markov Chain. What is the long-term expected proportion of time that the warehouse will spend in each inventory state?
+
+**Solution:**
+
+```{r}
+# Transition matrix
+P <- matrix(c(0.70, 0.25, 0.05,
+              0.20, 0.50, 0.30,
+              0.10, 0.40, 0.50), 
+            nrow = 3, byrow = TRUE)
+
+# (b) Probability that a warehouse starting in State 1 (High) eventually ends up in State 3 (Low)
+# Since this is not an absorbing Markov Chain, we will look at powers of the transition matrix
+# to analyze long-term behavior.
+
+# (c) Steady-state distribution
+# Solving for steady-state distribution: pi %*% P = pi
+steady_state <- eigen(t(P))$vectors[,1]
+steady_state <- steady_state / sum(steady_state)  # Normalize to sum to 1
+
+# Results
+list(
+  Transition_Matrix = P,
+  Steady_State_Distribution = steady_state
+)
+
+```
+
+To calculate the probability of eventually reaching a low inventory state from an initial high state, we would need to examine the evolution of the system over multiple time steps using powers of the transition matrix $P^n$  as $n$ increases. This would show the probability distribution across states after several transitions.
+
+***
